@@ -77,6 +77,9 @@ const deletePhoto = async (id: number, imageUrl: string) => {
     const decodedUrl = decodeURI(imageUrl);
     const parts = decodedUrl.split('/galerie/');
     const fileName = parts[1]?.split('?')[0];
+    console.log("URL originale:", imageUrl);
+    console.log("Fichier extrait:", fileName);
+
 
     // Suppression Storage
     if (fileName) {
