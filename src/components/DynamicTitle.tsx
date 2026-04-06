@@ -4,7 +4,8 @@ import { useEffect } from "react";
 const SECTION_TITLES: { [key: string]: string } = {
   association: "L'Association",
   evenements: "Nos Actions",
-  memoires: "MéMoire(S)", // Ajout de la section Mémoires ici
+  membres: "Membres",
+  memoires: "MéMoire(S)",
   galerie: "Galerie Photos",
   contact: "Contact",
 };
