@@ -12,17 +12,22 @@ export default function AdminGalerie() {
   // État pour forcer la réinitialisation de l'input file
   const [fileInputKey, setFileInputKey] = useState(Date.now());
 
-  const fetchPhotos = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('galerie_photos')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (data) setPhotos(data);
-    } catch (e) {
-      console.error("Erreur de chargement");
+const fetchPhotos = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('galerie_photos')
+      .select('*')
+      // On ajoute un paramètre bidon pour forcer Supabase à donner du frais
+      .order('created_at', { ascending: false });
+      
+    if (data) {
+      console.log("Photos récupérées :", data.length);
+      setPhotos(data);
     }
-  };
+  } catch (e) {
+    console.error("Erreur de chargement");
+  }
+};
 
   useEffect(() => {
     fetchPhotos();
