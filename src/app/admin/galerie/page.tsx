@@ -70,35 +70,50 @@ export default function AdminGalerie() {
     }
   };
 
-  const deletePhoto = async (id: number, imageUrl: string) => {
+const deletePhoto = async (id: number, imageUrl: string) => {
     if (!confirm("Voulez-vous vraiment supprimer cette photo ? Cette action est irréversible.")) return;
     
+    console.log("Tentative de suppression pour l'URL :", imageUrl);
+    
     try {
-      // Nettoyage de l'URL pour obtenir le nom exact du fichier dans le storage
-      const urlObjects = imageUrl.split('/');
-      const fileNameWithParams = urlObjects[urlObjects.length - 1];
-      const fileName = fileNameWithParams.split('?')[0];
+      // 1. EXTRACTION DU NOM DE FICHIER PLUS ROBUSTE
+      // On cherche tout ce qui se trouve après '/galerie/' (le nom de ton bucket)
+      const parts = imageUrl.split('/galerie/');
+      if (parts.length < 2) {
+        throw new Error("Impossible d'extraire le nom du fichier de l'URL.");
+      }
+      
+      // On prend la partie après le nom du bucket et on enlève les éventuels paramètres '?'
+      const fileName = parts[1].split('?')[0];
+      console.log("Nom du fichier à supprimer dans le Storage :", fileName);
 
-      // A. Suppression dans le Storage
+      // 2. SUPPRESSION DANS LE STORAGE
       const { error: storageError } = await supabase.storage
         .from('galerie')
         .remove([fileName]);
 
       if (storageError) {
-        console.warn("Le fichier n'a pas pu être supprimé du stockage, il est peut-être déjà absent.");
+        console.error("Erreur Storage détaillé:", storageError);
+        // On n'arrête pas forcément ici, on tente quand même la base de données
       }
 
-      // B. Suppression dans la Base
+      // 3. SUPPRESSION DANS LA BASE DE DONNÉES
       const { error: dbError } = await supabase
         .from('galerie_photos')
         .delete()
         .eq('id', id);
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error("Erreur DB détaillé:", dbError);
+        throw dbError;
+      }
 
-      fetchPhotos();
-    } catch (error) {
-      alert("Une erreur est survenue lors de la suppression.");
+      alert("Suppression réussie !");
+      fetchPhotos(); // Rafraîchir la liste
+      
+    } catch (error: any) {
+      console.error("Erreur complète:", error);
+      alert("Une erreur est survenue : " + (error.message || "Erreur inconnue"));
     }
   };
 
