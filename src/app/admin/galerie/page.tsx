@@ -71,52 +71,38 @@ export default function AdminGalerie() {
   };
 
 const deletePhoto = async (id: number, imageUrl: string) => {
-    if (!confirm("Voulez-vous vraiment supprimer cette photo ? Cette action est irréversible.")) return;
-    
-    console.log("Tentative de suppression pour l'URL :", imageUrl);
-    
-    try {
-      // 1. EXTRACTION DU NOM DE FICHIER PLUS ROBUSTE
-      // On cherche tout ce qui se trouve après '/galerie/' (le nom de ton bucket)
-      const parts = imageUrl.split('/galerie/');
-      if (parts.length < 2) {
-        throw new Error("Impossible d'extraire le nom du fichier de l'URL.");
-      }
-      
-      // On prend la partie après le nom du bucket et on enlève les éventuels paramètres '?'
-      const fileName = parts[1].split('?')[0];
-      console.log("Nom du fichier à supprimer dans le Storage :", fileName);
+  if (!confirm("Voulez-vous vraiment supprimer cette photo ?")) return;
+  
+  try {
+    // 1. On décode l'URL pour transformer les %20 en vrais espaces
+    const decodedUrl = decodeURI(imageUrl);
+    const parts = decodedUrl.split('/galerie/');
+    const fileName = parts[1]?.split('?')[0];
 
-      // 2. SUPPRESSION DANS LE STORAGE
-      const { error: storageError } = await supabase.storage
-        .from('galerie')
-        .remove([fileName]);
+    console.log("Nom de fichier nettoyé :", fileName);
 
-      if (storageError) {
-        console.error("Erreur Storage détaillé:", storageError);
-        // On n'arrête pas forcément ici, on tente quand même la base de données
-      }
-
-      // 3. SUPPRESSION DANS LA BASE DE DONNÉES
-      const { error: dbError } = await supabase
-        .from('galerie_photos')
-        .delete()
-        .eq('id', id);
-
-      if (dbError) {
-        console.error("Erreur DB détaillé:", dbError);
-        throw dbError;
-      }
-
-      alert("Suppression réussie !");
-      fetchPhotos(); // Rafraîchir la liste
-      
-    } catch (error: any) {
-      console.error("Erreur complète:", error);
-      alert("Une erreur est survenue : " + (error.message || "Erreur inconnue"));
+    // 2. Suppression Storage (On essaie, mais on ne bloque pas si ça échoue)
+    if (fileName) {
+      await supabase.storage.from('galerie').remove([fileName]);
     }
-  };
 
+    // 3. Suppression SQL avec vérification réelle
+    const { error, count } = await supabase
+      .from('galerie_photos')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+
+    // 4. On met à jour l'état local immédiatement pour que l'image disparaisse
+    setPhotos(prev => prev.filter(p => p.id !== id));
+    
+    alert("Supprimé de la base de données !");
+
+  } catch (error: any) {
+    alert("Erreur : " + error.message);
+  }
+};
   const editPhoto = async (id: number) => {
     const newTitle = prompt("Veuillez saisir le nouveau titre de l'image :");
     if (newTitle && newTitle.trim() !== "") {
