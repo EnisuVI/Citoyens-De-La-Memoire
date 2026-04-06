@@ -9,30 +9,30 @@ export default function AdminGalerie() {
   const [uploading, setUploading] = useState(false);
   const [title, setTitle] = useState("");
   const [photos, setPhotos] = useState<any[]>([]);
-  // État pour forcer la réinitialisation de l'input file
   const [fileInputKey, setFileInputKey] = useState(Date.now());
 
-const fetchPhotos = async () => {
-  try {
-    // On ajoute un timestamp pour casser le cache du navigateur et de Next.js
-    const { data, error } = await supabase
-      .from('galerie_photos')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (data) {
-      console.log("Photos réellement présentes en base :", data.length);
-      setPhotos(data);
+  // Récupération des photos
+  const fetchPhotos = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('galerie_photos')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (data) {
+        setPhotos(data);
+      }
+      if (error) throw error;
+    } catch (e) {
+      console.error("Erreur de chargement :", e);
     }
-  } catch (e) {
-    console.error("Erreur de chargement");
-  }
-};
+  };
 
   useEffect(() => {
     fetchPhotos();
   }, []);
 
+  // Upload d'une nouvelle photo
   const handleUpload = async () => {
     if (!file || !title) {
       return alert("Veuillez remplir tous les champs avant de publier.");
@@ -40,21 +40,22 @@ const fetchPhotos = async () => {
     
     setUploading(true);
     try {
+      // Nettoyage du nom de fichier pour éviter les problèmes d'URL
       const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
       
-      // 1. Upload Storage
+      // 1. Upload dans le bucket "galerie_photos"
       const { error: uploadError } = await supabase.storage
-        .from('galerie')
+        .from('galerie_photos')
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
-      // 2. URL Publique
+      // 2. Récupération de l'URL publique
       const { data: { publicUrl } } = supabase.storage
-        .from('galerie')
+        .from('galerie_photos')
         .getPublicUrl(fileName);
 
-      // 3. Insertion Base
+      // 3. Insertion dans la table SQL
       const { error: dbError } = await supabase
         .from('galerie_photos')
         .insert([{ titre: title, image_url: publicUrl }]);
@@ -63,59 +64,67 @@ const fetchPhotos = async () => {
 
       alert("La photo a été ajoutée avec succès.");
       
-      // Reset du formulaire
+      // Reset
       setTitle("");
       setFile(null);
-      setFileInputKey(Date.now()); // Ceci efface le nom du fichier à côté du bouton
+      setFileInputKey(Date.now());
       fetchPhotos();
-    } catch (error) {
-      alert("Une erreur est survenue lors de l'envoi.");
+    } catch (error: any) {
+      alert("Une erreur est survenue lors de l'envoi : " + error.message);
     } finally {
       setUploading(false);
     }
   };
 
-const deletePhoto = async (id: number, imageUrl: string) => {
-  if (!confirm("Voulez-vous vraiment supprimer cette photo ?")) return;
+  // Suppression d'une photo
+  const deletePhoto = async (id: number, imageUrl: string) => {
+    if (!confirm("Voulez-vous vraiment supprimer cette photo ?")) return;
 
-  try {
-    const decodedUrl = decodeURI(imageUrl);
-    const parts = decodedUrl.split('/galerie/');
-    const fileName = parts[1]?.split('?')[0];
-    console.log("URL originale:", imageUrl);
-    console.log("Fichier extrait:", fileName);
+    try {
+      // 1. Extraction propre du nom de fichier
+      // On décode l'URL (pour les espaces/%20) et on récupère ce qui est après le nom du bucket
+      const decodedUrl = decodeURI(imageUrl);
+      const parts = decodedUrl.split('/galerie_photos/');
+      const fileName = parts[1]?.split('?')[0];
 
+      console.log("Tentative de suppression du fichier :", fileName);
 
-    // Suppression Storage
-if (fileName) {
-  const { error: storageError } = await supabase.storage
-    .from('galerie')
-    .remove([fileName]); // fileName est déjà décodé, ça devrait marcher
-  console.log("Storage error:", storageError);
-}
+      // 2. Suppression dans le Storage (bucket: galerie_photos)
+      if (fileName) {
+        const { error: storageError } = await supabase.storage
+          .from('galerie_photos')
+          .remove([fileName]);
+        
+        if (storageError) {
+          console.warn("Note: Le fichier physique n'a pas pu être supprimé ou n'existait plus.");
+        }
+      }
 
+      // 3. Suppression dans la table SQL
+      const { data, error } = await supabase
+        .from('galerie_photos')
+        .delete()
+        .eq('id', id)
+        .select(); // Retourne la ligne supprimée pour confirmer
 
-    // Suppression SQL — avec log explicite
-    const { data, error } = await supabase
-      .from('galerie_photos')
-      .delete()
-      .eq('id', id)
-      .select(); // ← IMPORTANT : force Supabase à retourner ce qui a été supprimé
+      if (error) throw error;
 
-    console.log("Résultat delete:", data, error);
+      // Si data est vide, c'est que le RLS a bloqué la suppression
+      if (!data || data.length === 0) {
+        throw new Error("La suppression a été refusée par la base de données (vérifiez vos règles RLS).");
+      }
 
-    if (error) throw error;
-    if (!data || data.length === 0) {
-      throw new Error("Aucune ligne supprimée — vérifiez les policies RLS");
+      // Mise à jour de l'interface
+      setPhotos(prev => prev.filter(p => p.id !== id));
+      alert("Photo supprimée avec succès.");
+
+    } catch (error: any) {
+      console.error("Erreur suppression :", error);
+      alert("Erreur : " + error.message);
     }
+  };
 
-    setPhotos(prev => prev.filter(p => p.id !== id));
-
-  } catch (error: any) {
-    alert("Erreur : " + error.message);
-  }
-};
-
+  // Modification du titre
   const editPhoto = async (id: number) => {
     const newTitle = prompt("Veuillez saisir le nouveau titre de l'image :");
     if (newTitle && newTitle.trim() !== "") {
@@ -124,8 +133,11 @@ if (fileName) {
         .update({ titre: newTitle })
         .eq('id', id);
       
-      if (!error) fetchPhotos();
-      else alert("Une erreur est survenue lors de la modification.");
+      if (!error) {
+        fetchPhotos();
+      } else {
+        alert("Une erreur est survenue lors de la modification.");
+      }
     }
   };
 
@@ -141,6 +153,7 @@ if (fileName) {
         
         <h1 className="font-serif text-3xl text-[#2c3e50] mb-16 italic text-center">Gestion de la Galerie</h1>
 
+        {/* Formulaire d'ajout */}
         <div className="w-full flex justify-center mb-24">
           <div className="bg-white border border-[#ede5d4] p-10 shadow-sm w-full max-w-md">
             <h2 className="font-serif text-xl text-[#2c3e50] mb-8 text-center font-light">Nouvelle photo</h2>
@@ -159,7 +172,7 @@ if (fileName) {
               <div className="py-2">
                 <label className="block text-[9px] uppercase tracking-[2px] text-[#8b6f47] mb-3">Fichier</label>
                 <input 
-                  key={fileInputKey} // Force le reset de l'input après upload
+                  key={fileInputKey}
                   type="file" 
                   onChange={(e) => setFile(e.target.files?.[0] || null)} 
                   className="text-[11px] text-[#6b6b6b] cursor-pointer w-full"
@@ -169,7 +182,7 @@ if (fileName) {
               <button 
                 onClick={handleUpload} 
                 disabled={uploading} 
-                className="w-full py-4 bg-[#2c3e50] text-[#f5f0e8] text-[10px] uppercase tracking-[4px] hover:bg-[#3d5166] transition-all duration-300"
+                className="w-full py-4 bg-[#2c3e50] text-[#f5f0e8] text-[10px] uppercase tracking-[4px] hover:bg-[#3d5166] transition-all duration-300 disabled:opacity-50"
               >
                 {uploading ? "Veuillez patienter..." : "Publier la photo"}
               </button>
@@ -177,6 +190,7 @@ if (fileName) {
           </div>
         </div>
 
+        {/* Grille d'affichage */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-12 w-full">
           {photos.map((p) => (
             <div key={p.id} className="group flex flex-col items-center">
@@ -191,12 +205,14 @@ if (fileName) {
                   <button 
                     onClick={() => editPhoto(p.id)}
                     className="w-8 h-8 flex items-center justify-center bg-blue-600 text-white rounded-full shadow-md hover:scale-110 transition-transform"
+                    title="Modifier le titre"
                   >
                     <Pencil size={14} />
                   </button>
                   <button 
                     onClick={() => deletePhoto(p.id, p.image_url)}
                     className="w-8 h-8 flex items-center justify-center bg-red-600 text-white rounded-full shadow-md hover:scale-110 transition-transform"
+                    title="Supprimer la photo"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -209,7 +225,6 @@ if (fileName) {
             </div>
           ))}
         </div>
-
       </div>
     </div>
   );
