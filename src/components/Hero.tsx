@@ -1,115 +1,37 @@
 export default function Hero() {
   return (
-    <section style={{
-      position: 'relative',
-      background: 'linear-gradient(135deg, #2c3e50 0%, #3d5166 50%, #2c3e50 100%)',
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      textAlign: 'center',
-      padding: '0 24px',
-      paddingTop: '64px',  // ← ICI
-      overflow: 'hidden'
-    }}>
-      {/* Texture overlay */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(139,111,71,0.15) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(139,111,71,0.1) 0%, transparent 40%)',
-        pointerEvents: 'none'
-      }} />
-
-      <div style={{ position: 'relative', zIndex: 10, maxWidth: '680px', margin: '0 auto' }}>
-        {/* Badge */}
-        <div style={{
-          display: 'inline-block',
-          background: 'rgba(139,111,71,0.2)',
-          border: '1px solid rgba(139,111,71,0.4)',
-          color: '#c4a882',
-          fontFamily: 'Arial, sans-serif',
-          fontSize: '0.65rem',
-          letterSpacing: '3px',
-          textTransform: 'uppercase' as const,
-          padding: '6px 18px',
-          borderRadius: '20px',
-          marginBottom: '28px'
-        }}>
+    <section className="relative h-screen bg-[#2c3e50] flex flex-col items-center justify-center overflow-hidden">
+      {/* Grille subtile en arrière-plan */}
+      <div className="absolute inset-0 opacity-20" 
+           style={{backgroundImage: 'linear-gradient(rgba(245,240,232,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(245,240,232,0.03) 1px, transparent 1px)', backgroundSize: '60px 60px'}}>
+      </div>
+      
+      <div className="relative text-center px-6 max-w-4xl z-10">
+        <div className="inline-block border border-[#8b6f47]/40 bg-[#8b6f47]/20 text-[#8b6f47] text-[10px] tracking-[3px] uppercase px-4 py-1.5 rounded-full mb-8">
           Fondée en juin 2024 · Fouquières-lez-Béthune
         </div>
-
-        {/* Titre */}
-        <h1 style={{
-          fontFamily: 'Georgia, serif',
-          fontSize: 'clamp(2.8rem, 6vw, 4.5rem)',
-          fontWeight: 'bold',
-          color: '#f5f0e8',
-          lineHeight: 1.1,
-          marginBottom: '20px'
-        }}>
-          Les Citoyens<br />de la <span style={{ color: '#8b6f47' }}>Mémoire</span>
+        
+        <h1 className="text-4xl md:text-6xl text-[#f5f0e8] font-serif leading-tight mb-4">
+          Les Citoyens <br /> de la <span className="text-[#8b6f47]">Mémoire</span>
         </h1>
-
-        {/* Sous-titre */}
-        <p style={{
-          fontFamily: 'Arial, sans-serif',
-          fontSize: '0.7rem',
-          letterSpacing: '3px',
-          textTransform: 'uppercase' as const,
-          color: 'rgba(245,240,232,0.45)',
-          marginBottom: '24px'
-        }}>
+        
+        <p className="text-[12px] tracking-[3px] uppercase text-[#f5f0e8]/40 mb-8 font-light">
           Association Loi 1901
         </p>
-
-        {/* Description */}
-        <p style={{
-          fontFamily: 'Georgia, serif',
-          fontSize: '1.05rem',
-          color: 'rgba(245,240,232,0.75)',
-          lineHeight: 1.7,
-          maxWidth: '520px',
-          margin: '0 auto 40px'
-        }}>
+        
+        <p className="text-[#f5f0e8]/70 max-w-lg mx-auto mb-10 text-sm leading-relaxed">
           Transmettre le devoir de mémoire aux générations futures et faire connaître l'histoire locale de Fouquières-lez-Béthune.
         </p>
 
-        {/* Boutons */}
-        <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' as const }}>
-          <a href="#association" style={{
-            background: '#8b6f47', color: '#f5f0e8',
-            padding: '14px 32px', borderRadius: '4px',
-            fontFamily: 'Arial, sans-serif', fontSize: '0.85rem',
-            letterSpacing: '1px', textDecoration: 'none',
-            textTransform: 'uppercase' as const
-          }}>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <a href="#association" className="bg-[#8b6f47] text-[#f5f0e8] px-8 py-3 rounded-sm hover:bg-[#6b5337] transition-all text-sm uppercase tracking-wider">
             Découvrir l'association
           </a>
-          <a href="#evenements" style={{
-            background: 'transparent', color: '#f5f0e8',
-            border: '1px solid rgba(245,240,232,0.4)',
-            padding: '14px 32px', borderRadius: '4px',
-            fontFamily: 'Arial, sans-serif', fontSize: '0.85rem',
-            letterSpacing: '1px', textDecoration: 'none',
-            textTransform: 'uppercase' as const
-          }}>
+          <a href="#evenements" className="border border-[#f5f0e8]/20 text-[#f5f0e8]/80 px-8 py-3 rounded-sm hover:border-[#f5f0e8]/60 transition-all text-sm uppercase tracking-wider">
             Nos actions
           </a>
         </div>
       </div>
-
-      {/* Scroll hint */}
-      <a href="#stats" style={{
-        position: 'absolute', bottom: '36px', left: '50%',
-        transform: 'translateX(-50%)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        gap: '6px', textDecoration: 'none',
-        color: 'rgba(245,240,232,0.35)',
-        fontFamily: 'Arial, sans-serif', fontSize: '0.65rem',
-        letterSpacing: '2px', textTransform: 'uppercase' as const
-      }}>
-        <span>Défiler</span>
-        <span>↓</span>
-      </a>
     </section>
-  )
+  );
 }

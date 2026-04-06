@@ -2,9 +2,10 @@ import type { Metadata } from 'next'
 import './globals.css'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import { Providers } from "@/components/Providers" // On importe le nouveau fichier
 
 export const metadata: Metadata = {
-  title: 'Citoyens de la Mémoire',
+  title: 'Les Citoyens de la Mémoire',
   description: 'Préserver et transmettre la mémoire collective',
 }
 
@@ -16,9 +17,12 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body>
-        <Navbar />
-        <main>{children}</main>
-        <Footer />
+        {/* On enveloppe tout le contenu dans Providers */}
+        <Providers>
+          <Navbar />
+          <main>{children}</main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   )

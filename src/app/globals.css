@@ -14,8 +14,24 @@
   --blanc: #ffffff;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background-color: var(--beige);
   color: var(--texte);
-  font-family: 'Georgia', serif;
+  font-family: 'Georgia', serif; /* Look historique */
+}
+
+/* On réinjecte tes animations du fichier test.html */
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.8s ease-out;
+}
+
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
