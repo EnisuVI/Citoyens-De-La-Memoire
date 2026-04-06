@@ -72,37 +72,39 @@ export default function AdminGalerie() {
 
 const deletePhoto = async (id: number, imageUrl: string) => {
   if (!confirm("Voulez-vous vraiment supprimer cette photo ?")) return;
-  
+
   try {
-    // 1. On décode l'URL pour transformer les %20 en vrais espaces
     const decodedUrl = decodeURI(imageUrl);
     const parts = decodedUrl.split('/galerie/');
     const fileName = parts[1]?.split('?')[0];
 
-    console.log("Nom de fichier nettoyé :", fileName);
-
-    // 2. Suppression Storage (On essaie, mais on ne bloque pas si ça échoue)
+    // Suppression Storage
     if (fileName) {
-      await supabase.storage.from('galerie').remove([fileName]);
+      const { error: storageError } = await supabase.storage.from('galerie').remove([fileName]);
+      if (storageError) console.error("Storage error:", storageError);
     }
 
-    // 3. Suppression SQL avec vérification réelle
-    const { error, count } = await supabase
+    // Suppression SQL — avec log explicite
+    const { data, error } = await supabase
       .from('galerie_photos')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .select(); // ← IMPORTANT : force Supabase à retourner ce qui a été supprimé
+
+    console.log("Résultat delete:", data, error);
 
     if (error) throw error;
+    if (!data || data.length === 0) {
+      throw new Error("Aucune ligne supprimée — vérifiez les policies RLS");
+    }
 
-    // 4. On met à jour l'état local immédiatement pour que l'image disparaisse
     setPhotos(prev => prev.filter(p => p.id !== id));
-    
-    alert("Supprimé de la base de données !");
 
   } catch (error: any) {
     alert("Erreur : " + error.message);
   }
 };
+
   const editPhoto = async (id: number) => {
     const newTitle = prompt("Veuillez saisir le nouveau titre de l'image :");
     if (newTitle && newTitle.trim() !== "") {
