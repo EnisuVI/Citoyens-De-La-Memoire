@@ -14,14 +14,14 @@ export default function AdminGalerie() {
 
 const fetchPhotos = async () => {
   try {
+    // On ajoute un timestamp pour casser le cache du navigateur et de Next.js
     const { data, error } = await supabase
       .from('galerie_photos')
       .select('*')
-      // On ajoute un paramètre bidon pour forcer Supabase à donner du frais
       .order('created_at', { ascending: false });
-      
+    
     if (data) {
-      console.log("Photos récupérées :", data.length);
+      console.log("Photos réellement présentes en base :", data.length);
       setPhotos(data);
     }
   } catch (e) {
