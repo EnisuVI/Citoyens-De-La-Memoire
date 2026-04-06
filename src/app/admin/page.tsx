@@ -42,7 +42,7 @@ export default function AdminDashboard() {
       now.setHours(0, 0, 0, 0);
       const todayIso = now.toISOString().split('T')[0];
 
-      // On récupère uniquement les données existantes (pas de colonne 'taille')
+      // On récupère uniquement ce qui existe (pas de colonne 'taille')
       const [ph, me, ef, ep, mt, mnl, mList] = await Promise.all([
         supabase.from('galerie_photos').select('*', { count: 'exact', head: true }),
         supabase.from('memoires').select('*', { count: 'exact', head: true }),
@@ -89,7 +89,7 @@ export default function AdminDashboard() {
     ? `${lastSync.getHours().toString().padStart(2,'0')}:${lastSync.getMinutes().toString().padStart(2,'0')}`
     : '—';
 
-  // --- ACTIONS MESSAGERIE ---
+  // --- ACTIONS ---
   const toggleRead = async (e: React.MouseEvent, msg: any) => {
     e.stopPropagation();
     const { error } = await supabase.from('contacts').update({ lu: !msg.lu }).eq('id', msg.id);
@@ -132,12 +132,12 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-[#f5f0e8] pt-24 pb-20 px-6 font-sans relative text-left">
       <div className="max-w-6xl mx-auto">
         
-        {/* BANNIÈRE SÉCURITÉ */}
+        {/* BANNIÈRE SÉCURISÉ */}
         <div className="mb-10 border border-[#8b6f47]/30 bg-[#2c3e50]/5 px-8 py-4 flex items-center gap-4">
           <Shield size={16} className="text-[#8b6f47]" />
           <div className="flex-1">
             <p className="text-[9px] uppercase tracking-[4px] font-bold text-[#8b6f47]">
-              ESPACE SÉCURISÉ — ACCÈS RESTREINT
+              ESPACE SÉCURISÉ — ACCÈS RESTREINT AUX ADMINISTRATEURS AUTORISÉS
             </p>
           </div>
           <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse" />
@@ -165,14 +165,15 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-12">
           <StatCard icon={<ImageIcon size={18}/>} label="PHOTOS GALERIE" value={stats.photos} />
           <StatCard icon={<FileText size={18}/>} label="MÉMOIRE(S) PDF" value={stats.memoires} />
-          <StatCard icon={<Calendar size={18}/>} label="À VENIR" value={stats.eventsFuture} subLabel={`+${stats.eventsPast} PASSÉS`} />
+          <StatCard icon={<Calendar size={18}/>} label="ÉVÉNEMENTS À VENIR" value={stats.eventsFuture} subLabel={`+${stats.eventsPast} PASSÉS`} />
           <StatCard icon={<Mail size={18}/>} label="MESSAGES" value={stats.messagesTotal} subLabel={`${stats.messagesNonLus} NON-LUS`} highlight={stats.messagesNonLus > 0} />
           
           <div className="bg-white border border-[#ede5d4] p-6 shadow-sm relative">
             <HardDrive size={16} className="text-[#8b6f47] opacity-40 mb-6" />
             <div className="text-[10px] font-bold text-[#8b6f47] absolute top-6 right-6">{storagePercent.toFixed(1)}%</div>
             <div className="font-serif text-3xl text-[#2c3e50] mb-1">{stats.usedMB.toFixed(1)} MB</div>
-            <div className="text-[9px] uppercase tracking-[2px] text-[#8b6f47] font-bold">STOCKAGE ESTIMÉ</div>
+            <div className="text-[9px] uppercase tracking-[2px] text-[#8b6f47] font-bold">STOCKAGE</div>
+            <div className="text-[9px] text-gray-400 italic mt-1 font-serif">sur {stats.limitMB / 1024} Go disponibles</div>
             <div className="w-full h-[2px] bg-[#f5f0e8] mt-4">
               <div className="h-full bg-[#8b6f47]" style={{ width: `${storagePercent}%` }} />
             </div>
@@ -186,7 +187,7 @@ export default function AdminDashboard() {
           <MenuLink title="Événements" link="/admin/evenements" desc="Planifier l'agenda" />
         </div>
 
-        {/* ACTIVITÉ & STATUS */}
+        {/* ACTIVITÉ & SUPABASE BLOCK */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
           <div className="lg:col-span-2 bg-white border border-[#ede5d4] p-8 shadow-sm">
             <h3 className="font-serif text-lg text-[#2c3e50] mb-6 italic border-b border-[#f5f0e8] pb-4 flex items-center gap-2">
@@ -195,34 +196,36 @@ export default function AdminDashboard() {
             <div className="space-y-0">
               <ActivityItem text="Connexion au portail sécurisé réussie" time="À L'INSTANT" />
               <ActivityItem text={`Base de données synchronisée (${stats.photos + stats.memoires} fichiers)`} time={syncTime} />
+              <ActivityItem text="Mise à jour des messages terminée" time="RÉCEMMENT" />
             </div>
           </div>
+          
           <div className="bg-[#2c3e50] p-10 flex flex-col justify-center items-center text-center shadow-lg">
             <div className="w-16 h-16 rounded-full border border-[#8b6f47]/40 flex items-center justify-center mb-6">
               <CheckCircle2 size={28} className="text-[#8b6f47]" />
             </div>
             <h4 className="font-serif text-2xl text-[#f5f0e8] mb-4 italic">Système Intègre</h4>
             <p className="text-[10px] uppercase tracking-[3px] text-[#f5f0e8]/60 font-bold leading-loose px-4">
-              TOUTES LES SAUVEGARDES<br/>SONT À JOUR SUR SUPABASE.
+              TOUTES LES SAUVEGARDES<br/>SONT À JOUR SUR LE CLOUD<br/>SUPABASE.
             </p>
           </div>
         </div>
 
-        {/* BOITE DE RÉCEPTION */}
+        {/* LISTE MESSAGES */}
         <div className="bg-white border border-[#ede5d4] p-8 shadow-sm">
             <h3 className="font-serif text-lg text-[#2c3e50] mb-8 italic flex items-center gap-3 border-b border-[#f5f0e8] pb-4">
                 <Mail size={18} className="text-[#8b6f47]" /> Boîte de réception
-                {stats.messagesNonLus > 0 && <span className="ml-2 bg-[#8b6f47] text-white text-[9px] font-bold px-2 py-1">{stats.messagesNonLus} NON-LUS</span>}
+                {stats.messagesNonLus > 0 && <span className="ml-2 bg-[#8b6f47] text-white text-[9px] font-bold uppercase tracking-widest px-2 py-1">{stats.messagesNonLus} NON-LUS</span>}
             </h3>
             <div className="space-y-2">
                 {messages.map((msg) => (
                     <div key={msg.id} onClick={() => openMessage(msg)} className={`flex items-center justify-between p-4 border cursor-pointer hover:bg-[#fcfbf9] transition-all ${!msg.lu ? 'bg-[#8b6f47]/5 border-l-4 border-l-[#8b6f47] border-[#ede5d4]' : 'bg-white border-[#f5f0e8] opacity-70'}`}>
                         <div className="flex items-center gap-6 flex-1 min-w-0">
-                            <button onClick={(e) => toggleRead(e, msg)} className={`flex-shrink-0 ${msg.lu ? 'text-gray-300' : 'text-[#8b6f47]'}`}>
+                            <button onClick={(e) => toggleRead(e, msg)} className={`flex-shrink-0 transition-all hover:scale-110 ${msg.lu ? 'text-gray-300 hover:text-[#8b6f47]' : 'text-[#8b6f47]'}`}>
                                 {msg.lu ? <Eye size={16} /> : <EyeOff size={16} />}
                             </button>
-                            <div className="grid grid-cols-1 md:grid-cols-3 flex-1 items-center gap-4">
-                                <div className={`text-xs uppercase truncate ${!msg.lu ? 'font-bold text-[#2c3e50]' : 'text-gray-500'}`}>{msg.nom}</div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 flex-1 items-center gap-4 min-w-0">
+                                <div className={`text-xs uppercase truncate ${!msg.lu ? 'font-bold text-[#2c3e50]' : 'font-normal text-gray-500'}`}>{msg.nom}</div>
                                 <div className={`text-xs italic truncate ${!msg.lu ? 'text-[#8b6f47]' : 'text-gray-400'}`}>{msg.sujet}</div>
                                 <div className="text-[10px] text-gray-400 truncate">{msg.message}</div>
                             </div>
@@ -243,17 +246,33 @@ export default function AdminDashboard() {
                 <p className="text-[10px] uppercase tracking-widest text-[#8b6f47] font-bold">Lecture du courrier</p>
                 <h2 className="font-serif text-2xl text-[#2c3e50] italic">{selectedMsg.sujet}</h2>
               </div>
-              <button onClick={() => setSelectedMsg(null)} className="p-2 text-[#2c3e50] hover:bg-[#f5f0e8]"><X size={24} /></button>
+              <button onClick={() => setSelectedMsg(null)} className="p-2 text-[#2c3e50] hover:bg-[#f5f0e8] transition-colors"><X size={24} /></button>
             </div>
+            
             <div className="p-8 bg-[#fcfbf9] overflow-y-auto max-h-[60vh]">
               <div className="mb-6 pb-6 border-b border-[#ede5d4] grid grid-cols-2 gap-4 text-sm text-left">
-                <div><p className="text-[#8b6f47] text-[9px] font-bold uppercase">De</p><p className="text-[#2c3e50] font-serif">{selectedMsg.nom}</p></div>
-                <div><p className="text-[#8b6f47] text-[9px] font-bold uppercase">Adresse</p><p className="text-[#2c3e50] italic">{selectedMsg.email}</p></div>
+                <div><p className="text-[#8b6f47] text-[9px] font-bold uppercase mb-1">De</p><p className="text-[#2c3e50] font-serif">{selectedMsg.nom}</p></div>
+                <div><p className="text-[#8b6f47] text-[9px] font-bold uppercase mb-1">Adresse</p><p className="text-[#2c3e50] italic">{selectedMsg.email}</p></div>
+                <div>
+                  <p className="text-[#8b6f47] text-[9px] font-bold uppercase mb-1">Date</p>
+                  <p className="text-[#2c3e50] font-serif text-xs">
+                    {new Date(selectedMsg.created_at).toLocaleDateString('fr-FR', { 
+                      day: 'numeric', month: 'long', year: 'numeric',
+                      hour: '2-digit', minute: '2-digit'
+                    })}
+                  </p>
+                </div>
               </div>
-              <div className="font-serif text-[#2c3e50] leading-relaxed whitespace-pre-wrap text-lg text-left">{selectedMsg.message}</div>
+              <div className="font-serif text-[#2c3e50] leading-relaxed whitespace-pre-wrap text-lg text-left">
+                {selectedMsg.message}
+              </div>
             </div>
+
             <div className="p-6 bg-white border-t border-[#f5f0e8] flex justify-end gap-4">
-              <a href={`mailto:${selectedMsg.email}?subject=Re: ${selectedMsg.sujet}`} className="bg-[#2c3e50] text-white px-8 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-[#8b6f47] flex items-center gap-2">
+              <a 
+                href={`mailto:${selectedMsg.email}?subject=Re: ${selectedMsg.sujet}`} 
+                className="bg-[#2c3e50] text-white px-8 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-[#8b6f47] flex items-center gap-2 transition-colors"
+              >
                 <Reply size={16} /> Répondre
               </a>
             </div>
@@ -264,7 +283,6 @@ export default function AdminDashboard() {
   );
 }
 
-// COMPOSANTS INTERNES
 function StatCard({ icon, label, value, subLabel, highlight = false }: any) {
   return (
     <div className="bg-white border border-[#ede5d4] p-6 shadow-sm group hover:border-[#8b6f47] transition-all relative text-left">
