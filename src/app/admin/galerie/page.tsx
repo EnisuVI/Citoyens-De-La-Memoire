@@ -35,7 +35,7 @@ export default function AdminGalerie() {
     
     setUploading(true);
     try {
-      const fileName = `${Date.now()}-${file.name}`;
+      const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
       
       // 1. Upload Storage
       const { error: uploadError } = await supabase.storage
@@ -82,10 +82,13 @@ const deletePhoto = async (id: number, imageUrl: string) => {
 
 
     // Suppression Storage
-    if (fileName) {
-      const { error: storageError } = await supabase.storage.from('galerie').remove([fileName]);
-      if (storageError) console.error("Storage error:", storageError);
-    }
+if (fileName) {
+  const { error: storageError } = await supabase.storage
+    .from('galerie')
+    .remove([fileName]); // fileName est déjà décodé, ça devrait marcher
+  console.log("Storage error:", storageError);
+}
+
 
     // Suppression SQL — avec log explicite
     const { data, error } = await supabase
