@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import Hero from '@/components/Hero'
 import ContactForm from '@/components/ContactForm'
 import GalerieSection from '@/components/GalerieSection'
+import MembresSection from '@/components/MembresSection' // Ajoute cette ligne
 import DynamicTitle from '../components/DynamicTitle'
 import { 
   FileText, 
@@ -155,7 +156,7 @@ export default function Home() {
           )}
         </div>
       </section>
-
+    <MembresSection />
       {/* SECTION MÉMOIRE(S) */}
       <section id="memoires" style={{ padding: '100px 48px', background: '#fff' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>

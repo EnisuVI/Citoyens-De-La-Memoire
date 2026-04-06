@@ -17,6 +17,7 @@ export default function Navbar() {
   const links = [
     ["L'ASSOCIATION", '#association'],
     ['NOS ACTIONS',    '#evenements'],
+    ['MEMBRES',        '#membres'],
     ['MÉMOIRE(S)',    '#memoires'],
     ['GALERIE',       '#galerie'],
     ['CONTACT',       '#contact'],
