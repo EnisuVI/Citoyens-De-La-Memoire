@@ -8,6 +8,8 @@ export const authOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
+  // Indispensable pour le déploiement (Vercel/Production)
+  trustHost: true, 
   session: {
     strategy: "jwt" as const,
   },
@@ -17,11 +19,15 @@ export const authOptions = {
       return allowed.includes(user.email);
     },
     async jwt({ token, user }: any) {
-      if (user) token.role = "admin";
+      if (user) {
+        token.role = "admin";
+      }
       return token;
     },
     async session({ session, token }: any) {
-      if (session?.user) session.user.role = token.role;
+      if (session?.user) {
+        session.user.role = token.role;
+      }
       return session;
     },
   },
