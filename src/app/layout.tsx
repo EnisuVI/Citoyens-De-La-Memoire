@@ -7,6 +7,9 @@ import { Providers } from "@/components/Providers" // On importe le nouveau fich
 export const metadata: Metadata = {
   title: 'Les Citoyens de la Mémoire',
   description: 'Préserver et transmettre la mémoire collective',
+  icons: {
+    icon: '/favicon.ico',
+  },
 }
 
 export default function RootLayout({
